@@ -64,11 +64,6 @@ Log.prototype.Save = function Save() {
 }
 
 
-function respond(req, res, next) {
-    res.send('hello ' + req.params.name);
-    next();
-}
-
 function createLog(data) {
     var log = new Log();
     log.dateCreated = new Date();
@@ -82,8 +77,6 @@ function createLog(data) {
 var server = restify.createServer();
 server.use(restify.bodyParser());
 
-server.get('/hello/:name', respond);
-server.head('/hello/:name', respond);
 server.post('/logs', function createLog(req, res, next) {
     createLog({
         type: 'error',
