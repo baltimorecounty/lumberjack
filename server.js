@@ -5,14 +5,10 @@ var moment = require('moment');
 var logPath = './logs/'
 var logName = 'lumberjack.json';
 
-
-function writeFile() {
-
-}
-
 function getFileName() {
-    var date = moment().format('yyyymmdd');
-    return logName.split('.').splice(1, 0, date);
+    var dateStr = moment().format('YYYYMMDD');
+    var logNameParts = logName.split('.');
+    return logNameParts[0] + '-' + dateStr + '.' + logNameParts[1];
 }
 
 function getFullLogPath() {
@@ -20,47 +16,37 @@ function getFullLogPath() {
     return logPath + fileName;
 }
 
-function createFile(filePath) {
-    fs.writeFile(filePath, null, 'utf8', function () {
+function writeFile(filePath, logs) {
+    var data = logs || '[]';
+    fs.writeFile(filePath, data, 'utf8', function () {
         console.log('file created at: ' + filePath);
     });
 }
 
-function processFile(log) {
+function processLogs(logData) {
     var filePath = getFullLogPath();
 
     fs.readFile(filePath, 'utf8', function readFileCallback(err, data) {
         if (err) {
             //Else file probably doesn't exist, create it
-            createFile(filePath);
+            writeFile(filePath);
+            processLogs(logData); //TODO: THIS NEEDS TO BE FIXED
         }
         else {
-            //Process the fiel
+            var logs = JSON.parse(data);
+            logs.push(logData);
+            writeFile(filePath, JSON.stringify(logs));
         }
 
     });
 }
-
-function readFile() {
-    fs.readFile('myjsonfile.json', 'utf8', function readFileCallback(err, data) {
-        if (err) {
-            console.log(err);
-        } else {
-            obj = JSON.parse(data); //now it an object
-            obj.table.push({ id: 2, square: 3 }); //add some data
-            json = JSON.stringify(obj); //convert it back to json
-            fs.writeFile('myjsonfile.json', json, 'utf8', callback); // write it back 
-        }
-    });
-}
-
 
 function Log() {
 
 }
 
 Log.prototype.Save = function Save() {
-    processFile(this);
+    processLogs(this);
 }
 
 
@@ -75,16 +61,12 @@ function createLog(data) {
 }
 
 var server = restify.createServer();
-server.use(restify.bodyParser());
+server.use(restify.plugins.bodyParser());
 
-server.post('/logs', function createLog(req, res, next) {
-    createLog({
-        type: 'error',
-        message: 'test',
-        browser: 'chrome'
-    });
+server.post('/logs', function (req, res, next) {
+    createLog(req.body);
+    return next();
 }, function () {
-
 });
 
 server.listen(8080, function () {
