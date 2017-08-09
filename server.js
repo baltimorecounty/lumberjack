@@ -41,6 +41,18 @@ function processLogs(logData) {
     });
 }
 
+//TODO: Add paging
+function getLogs(callback) {
+    var filePath = getFullLogPath(callback);
+    return fs.readFile(filePath, 'utf8', function readFileCallback(err, data) {
+        if (err) {
+            //TODO: Handle Error
+            return callback([]);
+        }
+        return callback(JSON.parse(data));
+    });
+}
+
 function Log() {
 
 }
@@ -63,6 +75,13 @@ function createLog(data) {
 var server = restify.createServer();
 server.use(restify.plugins.bodyParser());
 
+server.get('/logs', function (req, res, next) {
+    getLogs(function (log) {
+        res.send(200, log);
+        return next();
+    });
+
+})
 server.post('/logs', function (req, res, next) {
     createLog(req.body);
     return next();
